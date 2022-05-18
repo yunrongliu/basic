@@ -102,6 +102,14 @@ const genMutexMap = function (options, mutexConfigs, bitKey, mutexKey = 'text') 
         updateMutex(leftMutexText, mutexText)
         updateMutex(mutexText, mutexConfig.left)
       })
+    } else if (mutexConfig.type === 'mutex') {
+      mutexConfig.mutexTextList.forEach((mutexText) => {
+        mutexConfig.mutexTextList.forEach(mutexText2 => {
+          if (mutexText !== mutexText2) {
+            updateMutex(mutexText, mutexText2)
+          }
+        })
+      })
     }
   })
 
@@ -147,8 +155,24 @@ const genBit = function (props) {
   }
 }
 
+const resolveComposeRegExp = /\w+/g
+const resolveMutexRegExp = /\w+/g
+const resolveMutexConfig = function (mutexConfig) {
+  mutexConfig.forEach((config) => {
+    if (config.type === 'compose') {
+      const expression = config.expression.match(resolveComposeRegExp)
+      config.left = expression[0]
+      config.right = expression.slice(1)
+    } else if (config.type === 'mutex') {
+      const expression = config.expression.match(resolveMutexRegExp)
+      config.mutexTextList = expression
+    }
+  })
+}
+
 const useMutex = function (props, emit) {
   const { bitKey = 'value', options, mutexConfig } = props
+  resolveMutexConfig(mutexConfig)
   const mutexMap = genMutexMap(options, mutexConfig, bitKey)
   const { useValue, checkedSet, isChecked, getCheckedItem, getCheckedValue, bitMap } = genBit(props)
 
